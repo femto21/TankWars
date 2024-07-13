@@ -1,5 +1,5 @@
 import pygame
-from pygame import Vector2
+from pygame import Vector2, FRect
 
 # Define the variables
 BLOCK_WIDTH = 48
@@ -16,46 +16,61 @@ reference_dict = {}
 def rotate_on_pivot(image, angle, pivot, origin):
     surf = pygame.transform.rotate(image, angle)
     offset = pivot + (origin - pivot).rotate(-angle)
-    rect = surf.get_rect(center=offset)
+    rect = surf.get_frect(center = offset)
     return surf, rect
 
 
 # Class for the Tanks
 class Tank(pygame.sprite.Sprite):
-    def __init__(self, tank_type, x, y, speed):
+    max_speed = 2.5
+    acceleration = 0.1
+
+    def __init__(self, tank_type, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.tank_type = tank_type
         self.animation_list = []
         self.animation_index = 0
-        self.update_time = pygame.time.get_ticks()
-        self.speed = speed
+        self.animation_update_time = pygame.time.get_ticks()
+        self.speed = 0
+        self.acceleration_update_time = pygame.time.get_ticks()
         for i in range(3):
             image_name = f'{self.tank_type}{i}'
             image = reference_dict[image_name]
             self.animation_list.append(image)
         self.tank_image = self.animation_list[self.animation_index]
-        self.tank = self.tank_image.get_rect()
+        self.tank = self.tank_image.get_frect()
         self.tank.center = (x, y)
         self.pivot_x = self.tank.center[0]
         self.pivot_y = self.tank.center[1] - 10
-        self.turret = Turret(Vector2(self.pivot_x, self.pivot_y), starting_angle=0)
+        self.turret = Turret(Vector2(self.pivot_x, self.pivot_y), starting_angle = 0)
 
     # Method to update the positions of the tank and turret
-    def update(self, moving_left, moving_right, rotating_up, rotating_down):
-        # reset movement variables
-        dx = 0
-        dy = 0
+    def update(self, move_left, move_right, rotate_up, rotate_down):
+        # the cooldown before each time the tank is accelerated/decelerated
+        ACCELERATION_COOLDOWN = 100
 
-        # assign movement variables if moving left or right
-        if moving_left:
-            dx = -self.speed
+        # accelerate or decelerate the tank based on keys pressed
+        if pygame.time.get_ticks() - self.acceleration_update_time > ACCELERATION_COOLDOWN:
+            self.acceleration_update_time = pygame.time.get_ticks()
 
-        if moving_right:
-            dx = self.speed
+            if move_left:
+                self.decelerate()
+            elif move_right:
+                self.accelerate()
+            # if no keys are pressed, friction slows down the tank
+            else:
 
+                if self.speed != 0:
+                    if self.speed > 0:
+                        self.speed -= self.acceleration * 4
+                    elif self.speed < 0:
+                        self.speed += self.acceleration * 4
+
+                    if 0.2 > self.speed > -0.2:
+                        self.speed = 0
+                        
         # update rectangle position
-        self.tank.x = self.tank.x + dx
-        self.tank.y = self.tank.y + dy
+        self.tank.x = self.tank.x + self.speed
 
         # update turret position
         self.pivot_x = self.tank.center[0]
@@ -63,7 +78,23 @@ class Tank(pygame.sprite.Sprite):
         turret_pivot = Vector2(self.pivot_x, self.pivot_y)
 
         self.turret.move(turret_pivot)
-        self.turret.rotate(rotating_up, rotating_down)
+        self.turret.rotate(rotate_up, rotate_down)
+
+    # method to speed up the tank in the right direction
+    def accelerate(self):
+        if self.speed <= 0:
+            self.speed += self.acceleration * 6
+        else:
+            if abs(self.speed) < self.max_speed:
+                self.speed += self.acceleration
+
+    # method to speed up the tank in the left direction
+    def decelerate(self):
+        if self.speed >= 0:
+            self.speed -= self.acceleration * 3
+        else:
+            if abs(self.speed) < self.max_speed:
+                self.speed -= self.acceleration
 
     # Method to draw the turret and the tank
     def draw(self, surface):
@@ -72,17 +103,28 @@ class Tank(pygame.sprite.Sprite):
 
     # Method to update the current animation of the tank (excluding the turret)
     def update_animation(self):
-        ANIMATION_COOLDOWN = 100
-        # update image depending on current frame
-        self.tank_image = self.animation_list[self.animation_index]
+        if self.speed != 0:
+            ANIMATION_COOLDOWN = 100/abs(self.speed)
 
-        # check if enough time has passed since the last update
-        if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
-            self.animation_index = self.animation_index + 1
+            # update image depending on current frame
+            self.tank_image = self.animation_list[self.animation_index]
 
-        # if animation has run out, reset back to the start
-        if self.animation_index >= len(self.animation_list):
-            self.animation_index = 0
+            # check if enough time has passed since the last update
+            if pygame.time.get_ticks() - self.animation_update_time > ANIMATION_COOLDOWN:
+                self.animation_update_time = pygame.time.get_ticks()
+
+                if self.speed > 0:
+                    self.animation_index += 1
+                if self.speed < 0:
+                    self.animation_index -= 1
+
+            # if animation has run out, reset back to the start
+            if self.speed > 0:
+                if self.animation_index >= len(self.animation_list):
+                    self.animation_index = 0
+            if self.speed < 0:
+                if self.animation_index < 0:
+                    self.animation_index = len(self.animation_list) - 1
 
 
 # Class for the Tank Turrets
@@ -90,15 +132,15 @@ class Turret:
     # Distance between the turret and the point of pivot
     pivot_distance = 24
 
-    def __init__(self, pivot, starting_angle=0):
+    def __init__(self, pivot, starting_angle = 10):
         self.pivot = pivot
-        self.angle = 0
+        self.angle = 10
         self.offset = Vector2()
         self.offset.from_polar((self.pivot_distance, -starting_angle))
         self.pos = pivot + self.offset
         self.image_orig = reference_dict['LeftTankTurret']
         self.image = self.image_orig
-        self.turret = self.image.get_rect(center=self.pos)
+        self.turret = self.image.get_frect(center=self.pos)
 
     # Method to handle the rotation of the turret
     def rotate(self, rotating_up, rotating_down):
@@ -106,7 +148,7 @@ class Turret:
             if self.angle < 65:
                 self.angle += 1
         if rotating_down:
-            if self.angle > 0:
+            if self.angle > 10:
                 self.angle -= 1
 
         self.image, self.turret = rotate_on_pivot(self.image_orig, self.angle, self.pivot, self.pos)
@@ -121,6 +163,13 @@ class Turret:
         pygame.draw.line(surface, 'red', (self.pivot.x, 0), (self.pivot.x, SCREEN_HEIGHT))
         pygame.draw.line(surface, 'red', (0, self.pivot.y), (SCREEN_WIDTH, self.pivot.y))
         surface.blit(self.image, self.turret)
+
+
+# Class for the Cannon-Balls that are launched from the turret
+class CannonBall:
+    def __init__(self, launch_pivot, launch_angle):
+        self.launch_pivot = launch_pivot
+        self.launch_angle = launch_angle
 
 
 # Class that handles the game logic
@@ -147,7 +196,7 @@ class Game:
             self.load_image('LeftTank', f'LeftTank{i}')
 
         # Create Tank object for the first player
-        self.first_tank = Tank('LeftTank', 500, 300, 5)
+        self.first_tank = Tank('LeftTank', 500, 300)
 
     # Method to load the required images into the reference dictionary
     def load_image(self, tank_type, image_name, colorKey=None):
