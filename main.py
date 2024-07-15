@@ -13,6 +13,20 @@ SCREEN_SIZE = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 reference_dict = {}
 
 
+# Method to load the required images into the reference dictionary
+def load_image(tank_type, image_name, scale, colorKey=None):
+    image = pygame.image.load(f'Images/{tank_type}/{image_name}.png')
+    width = image.get_width() * scale
+    height = image.get_height() * scale
+
+    image = pygame.transform.scale(image, (width, height))
+
+    if colorKey is not None:
+        image.set_colorkey(colorKey)
+
+    reference_dict[image_name] = image
+
+
 # function to rotate an object on a specified pivot (2D vector)
 def rotate_on_pivot(image, angle, pivot, origin):
     surf = pygame.transform.rotate(image, angle)
@@ -138,11 +152,12 @@ class Tank(pygame.sprite.Sprite):
 
 
 # Class for the Tank Turrets
-class Turret:
+class Turret(pygame.sprite.Sprite):
     # Distance between the turret and the point of pivot
     pivot_distance = 24
 
     def __init__(self, pivot, starting_angle = 10):
+        pygame.sprite.Sprite.__init__(self)
         self.pivot = pivot
         self.angle = 10
         self.offset = Vector2()
@@ -164,6 +179,7 @@ class Turret:
         self.cannonball.handle_projectile(dt)
         self.cannonball.update_position(self.turret.center, self.angle)
         self.cannonball.check_if_landed(self.pivot)
+        self.cannonball.handle_explosion()
 
     # Method to handle the rotation of the turret
     def rotate(self, rotating_up, rotating_down, dt):
@@ -202,7 +218,7 @@ class Turret:
 
 
 # Class for the Cannonballs that are launched from the turret
-class Cannonball:
+class Cannonball(pygame.sprite.Sprite):
     # Minimum and maximum speeds of the cannon-ball
     min_speed = 250
     max_speed = 500
@@ -210,13 +226,17 @@ class Cannonball:
     g = 5
 
     def __init__(self, launch_point, launch_angle):
+        pygame.sprite.Sprite.__init__(self)
         self.launch_angle = launch_angle
         self.image = reference_dict['Cannonball']
         self.cannonball = self.image.get_frect(center = launch_point)
         self.launch_speed = self.min_speed
         self.horizontal_speed = self.launch_speed * cos(radians(self.launch_angle))
         self.vertical_speed = self.launch_speed * sin(radians(self.launch_angle))
+        self.explosion = Explosion(launch_point)
         self.launched = False
+        self.explosion_started = False
+        self.explosion_point = launch_point
 
     # update the position of the cannonball while it's loaded in the turret
     def update_position(self, position, angle):
@@ -234,9 +254,9 @@ class Cannonball:
             current_x_position += self.horizontal_speed * dt
             current_y_position -= self.vertical_speed * dt
             self.cannonball.center = Vector2(current_x_position, current_y_position)
-            print(self.horizontal_speed)
             # Implement gravity
             self.vertical_speed -= self.g
+            self.explosion.update(self.cannonball.center)
 
     # Method to update the horizontal and vertical speed components of the turret while it is loaded in the turret
     def update_speed(self):
@@ -250,9 +270,16 @@ class Cannonball:
 
     # Method to check if the cannonball has landed
     def check_if_landed(self, pivot):
-        if self.cannonball.centery > pivot.y:
+        if self.cannonball.centery > pivot.y + 30:
+            self.explosion.explosion_started = True
+            self.explosion.update_position(self.cannonball.center)
             self.launched = False
             self.launch_speed = self.min_speed
+
+    # Method to implement the explosion of the cannonball
+    def handle_explosion(self):
+        if self.explosion.explosion_started:
+            self.explosion.explode()
 
     # Method to draw the cannonball on the screen
     def draw(self, surface):
@@ -260,6 +287,51 @@ class Cannonball:
         pygame.draw.line(surface, 'green', (0, self.cannonball.centery), (SCREEN_WIDTH, self.cannonball.centery))
         if self.launched:
             surface.blit(self.image, self.cannonball)
+        self.explosion.draw(surface)
+
+
+# Class for the cannonball explosion
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, position):
+        pygame.sprite.Sprite.__init__(self)
+        self.images = []
+        for i in range(1, 9):
+            self.images.append(reference_dict[f'explosion{i}'])
+        self.index = 0
+        self.image = self.images[self.index]
+        self.explosion = self.image.get_frect(center = position)
+        self.counter = 0
+        self.explosion_started = False
+
+    # Method to make the about-to-be explosion follow the cannonball
+    def update_position(self, position):
+        self.explosion.center = position
+
+    # Method to initiate and handle the explosion
+    def explode(self):
+        explosion_speed = 4
+        # Update explosion animation
+        self.counter += 1
+
+        if self.counter >= explosion_speed and self.index < len(self.images) - 1:
+            self.counter = 0
+            self.index += 1
+            self.image = self.images[self.index]
+
+        # if the animation is complete, reset animation index
+        if self.index >= len(self.images) - 1 and self.counter >= explosion_speed:
+            self.reset()
+
+    # Method to reset the explosion to its about-to-be state
+    def reset(self):
+        self.explosion_started = False
+        self.index = 0
+        self.counter = 0
+
+    # Method to draw the explosion
+    def draw(self, surface):
+        if self.explosion_started:
+            surface.blit(self.image, self.explosion)
 
 
 # Class that handles the game logic
@@ -282,23 +354,15 @@ class Game:
         self.charging_launch = False
 
         # Add the required images to the reference dictionary
-        self.scale = 0.2
-        self.load_image('LeftTank', 'LeftTankTurret')
+        load_image('LeftTank', 'LeftTankTurret', 1)
         for i in range(3):
-            self.load_image('LeftTank', f'LeftTank{i}')
-        self.load_image('LeftTank', 'Cannonball')
+            load_image('LeftTank', f'LeftTank{i}', 1)
+        load_image('LeftTank', 'Cannonball', 1)
+        for i in range(1, 9):
+            load_image('LeftTank', f'explosion{i}', 3)
 
         # Create Tank object for the first player
         self.first_tank = Tank('LeftTank', 500, 300)
-
-    # Method to load the required images into the reference dictionary
-    def load_image(self, tank_type, image_name, colorKey=None):
-        image = pygame.image.load(f'Images/{tank_type}/{image_name}.png')
-
-        if colorKey is not None:
-            image.set_colorkey(colorKey)
-
-        reference_dict[image_name] = image
 
     # Method to update the tank and its animation
     def update(self, dt):
