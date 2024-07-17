@@ -2,6 +2,7 @@ import pygame
 from pygame import Vector2
 
 from scripts.config import reference_dict
+from smoke import Smoke
 from turret import Turret
 
 
@@ -27,6 +28,8 @@ class Tank(pygame.sprite.Sprite):
         self.pivot_x = self.tank.center[0]
         self.pivot_y = self.tank.center[1] - 10
         self.turret = Turret(Vector2(self.pivot_x, self.pivot_y), starting_angle = 0)
+        self.smoke_group = pygame.sprite.Group()
+        self.smoke_cooldown = 0
 
     # Method to update the positions of the tank and turret
     def update(self, move_left, move_right, rotate_up, rotate_down, charging_launch, dt):
@@ -36,6 +39,7 @@ class Tank(pygame.sprite.Sprite):
             self.decelerate(dt)
         elif move_right:
             self.accelerate(dt)
+            self.smoke_cooldown += 1
         # if no keys are pressed, friction slows down the tank
         else:
             if self.speed != 0:
@@ -51,11 +55,12 @@ class Tank(pygame.sprite.Sprite):
         self.tank.x = self.tank.x + self.speed
 
         # update turret position
-        self.pivot_x = self.tank.center[0]
-        self.pivot_y = self.tank.center[1] - 10
+        self.pivot_x = self.tank.centerx
+        self.pivot_y = self.tank.centery - 10
         turret_pivot = Vector2(self.pivot_x, self.pivot_y)
 
         self.turret.update(turret_pivot, rotate_up, rotate_down, dt)
+        self.smoke_group.update()
 
         # If the cannon-ball launch is ready, check if the player is charging it
         if self.turret.launch_ready:
@@ -74,6 +79,9 @@ class Tank(pygame.sprite.Sprite):
         else:
             if abs(self.speed) < self.max_speed:
                 self.speed += self.acceleration * dt
+        if self.smoke_cooldown % 10 == 0:
+            smoke = Smoke(self.speed, self.tank.centerx - 40, self.tank.centery - 15)
+            self.smoke_group.add(smoke)
 
     # method to speed up the tank in the left direction
     def decelerate(self, dt):
@@ -86,6 +94,7 @@ class Tank(pygame.sprite.Sprite):
     # Method to draw the turret and the tank
     def draw(self, surface):
         self.turret.draw(surface)
+        self.smoke_group.draw(surface)
         surface.blit(self.tank_image, self.tank)
 
     # Method to update the current animation of the tank (excluding the turret)

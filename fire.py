@@ -67,11 +67,11 @@ class Fire(pygame.sprite.Sprite):
 
     # Method to add the images to the images list
     def upload_images(self):
-        spritesheet = Spritesheet('Images/LeftTank/Sparks-Sheet.png')
+        spritesheet = Spritesheet('Images/Sparks-Sheet.png')
         sprite_row = 0
         sprite_column = 0
         for i in range(7):
-            image = spritesheet.get_sprite(sprite_column * 96, sprite_row * 96, 96, 96)
+            image = spritesheet.get_sprite(sprite_column * 96, sprite_row * 96, 96, 96, 'black')
             self.images.append(image)
             sprite_column += 1
             if sprite_column > 2:

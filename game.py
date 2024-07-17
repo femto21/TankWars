@@ -1,7 +1,6 @@
 import pygame
 
 from scripts.config import SCREEN_SIZE, load_image
-from scripts.spritesheet import Spritesheet
 from tank import Tank
 
 
