@@ -28,8 +28,8 @@ class Turret(pygame.sprite.Sprite):
         self.cannonball = Cannonball(self.cannonball_origin, self.angle)
         self.launch_ready = True
         self.charged = False
-        self.fire_animation = Fire(self.turret.center, self.angle)
-        self.fire = False
+        self.fire_animation = Fire(self.pivot, self.angle)
+        self.fired = False
 
     # Method to handle other methods of the turret and the cannonballs
     def update(self, turret_pivot, rotate_up, rotate_down, dt):
@@ -39,8 +39,7 @@ class Turret(pygame.sprite.Sprite):
         self.cannonball.update_position(self.turret.center, self.angle)
         self.cannonball.check_if_landed(self.pivot)
         self.cannonball.handle_explosion()
-        self.fire_animation.update_position(self.turret.center, self.angle)
-        self.handle_fire_animation()
+        self.fire_animation.fire(self.fired)
 
     # Method to handle the rotation of the turret
     def rotate(self, rotating_up, rotating_down, dt):
@@ -52,10 +51,12 @@ class Turret(pygame.sprite.Sprite):
                 self.angle -= 30 * dt
 
         self.image, self.turret = rotate_on_pivot(self.image_orig, self.angle, self.pivot, self.pos)
+        self.fire_animation.rotate(self.angle)
 
     # Method to move the turret's pivot point
     def move(self, pivot):
         self.pivot = Vector2(pivot)
+        self.fire_animation.move(pivot)
         self.pos = self.pivot + self.offset
 
     # Method to increase the cannonball launch speed if the user is charging it
@@ -69,13 +70,9 @@ class Turret(pygame.sprite.Sprite):
         self.cannonball.launch_angle = self.angle
         self.cannonball.launched = True
         self.charged = False
-        self.fire = True
-
-    def handle_fire_animation(self):
-        if self.fire:
-            self.fire_animation.fire()
-            if not self.fire_animation.firing:
-                self.fire = False
+        self.fired = True
+        if self.cannonball.next_shot_ready:
+            self.fire_animation.firing = True
 
     # Method to draw the turret
     def draw(self, surface):

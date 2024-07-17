@@ -27,6 +27,7 @@ class Cannonball(pygame.sprite.Sprite):
         self.launched = False
         self.explosion_started = False
         self.explosion_point = launch_point
+        self.next_shot_ready = True
 
     # update the position of the cannonball while it's loaded in the turret
     def update_position(self, position, angle):
@@ -39,6 +40,7 @@ class Cannonball(pygame.sprite.Sprite):
     # update the position of the cannonball after it's launched
     def handle_projectile(self, dt):
         if self.launched:
+            self.next_shot_ready = False
             current_x_position = self.cannonball.centerx
             current_y_position = self.cannonball.centery
             current_x_position += self.horizontal_speed * dt
@@ -61,6 +63,7 @@ class Cannonball(pygame.sprite.Sprite):
     # Method to check if the cannonball has landed
     def check_if_landed(self, pivot):
         if self.cannonball.centery > pivot.y + 30:
+            self.next_shot_ready = True
             self.explosion.explosion_started = True
             self.explosion.update_position(self.cannonball.center)
             self.launched = False
