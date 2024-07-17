@@ -29,7 +29,6 @@ class Turret(pygame.sprite.Sprite):
         self.launch_ready = True
         self.charged = False
         self.fire_animation = Fire(self.pivot, self.angle)
-        self.fired = False
 
     # Method to handle other methods of the turret and the cannonballs
     def update(self, turret_pivot, rotate_up, rotate_down, dt):
@@ -39,7 +38,7 @@ class Turret(pygame.sprite.Sprite):
         self.cannonball.update_position(self.turret.center, self.angle)
         self.cannonball.check_if_landed(self.pivot)
         self.cannonball.handle_explosion()
-        self.fire_animation.fire(self.fired)
+        self.fire_animation.fire()
 
     # Method to handle the rotation of the turret
     def rotate(self, rotating_up, rotating_down, dt):
@@ -70,7 +69,6 @@ class Turret(pygame.sprite.Sprite):
         self.cannonball.launch_angle = self.angle
         self.cannonball.launched = True
         self.charged = False
-        self.fired = True
         if self.cannonball.next_shot_ready:
             self.fire_animation.firing = True
 

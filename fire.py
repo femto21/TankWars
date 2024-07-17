@@ -40,11 +40,9 @@ class Fire(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center = self.rect.center)
 
     # Method to initiate the animation when a shot is fired
-    def fire(self, fired):
-        if self.firing and fired:
-
+    def fire(self):
+        if self.firing:
             fire_speed = 4
-
             # Update fire animation
             self.counter += 1
             if self.counter >= fire_speed and self.index < len(self.images) - 1:
