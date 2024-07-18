@@ -1,6 +1,7 @@
 import pygame
 
 
+# Class for the spritesheets and getting their individual images
 class Spritesheet:
     def __init__(self, filename):
         self.sheet = pygame.image.load(filename)

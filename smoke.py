@@ -7,17 +7,21 @@ from scripts.spritesheet import Spritesheet
 class Smoke(pygame.sprite.Sprite):
     def __init__(self, speed, x, y):
         pygame.sprite.Sprite.__init__(self)
+        self.speed = speed
         self.index = 0
         self.images = []
         self.upload_images()
         self.image = self.images[self.index]
-        self.rect = self.image.get_frect(center = (x, y))
+        self.x = x
+        self.y = y - 15
         if speed > 0:
-            self.smoke_direction = 'left'
+            self.x = x - 20
         elif speed < 0:
-            self.smoke_direction = 'right'
+            self.x = x + 20
+        self.rect = self.image.get_frect(center = (self.x, self.y))
         self.counter = 0
 
+    # Method to change the current smoke image
     def update(self):
         smoke_speed = 2
         # Update fire animation
@@ -38,7 +42,11 @@ class Smoke(pygame.sprite.Sprite):
         sprite_column = 0
         for i in range(40):
             image = spritesheet.get_sprite(sprite_column * 150, sprite_row * 150, 150, 150, 'black')
-            image = pygame.transform.scale(image, (96, 96))
+            if self.speed > 0:
+                image = pygame.transform.scale(image, (96, 96))
+            elif self.speed < 0:
+                image = pygame.transform.scale(image, (96, 96))
+                image = pygame.transform.flip(image, True, False)
             self.images.append(image)
             sprite_column += 1
             if sprite_column > 4:
