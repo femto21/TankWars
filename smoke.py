@@ -13,7 +13,7 @@ class Smoke(pygame.sprite.Sprite):
         self.upload_images()
         self.image = self.images[self.index]
         self.x = x
-        self.y = y - 15
+        self.y = y
         if speed > 0:
             self.x = x - 20
         elif speed < 0:
@@ -31,9 +31,6 @@ class Smoke(pygame.sprite.Sprite):
             self.index += 1
             self.image = self.images[self.index]
 
-        if self.index > 10:
-            self.image = pygame.transform.box_blur(self.image, 5)
-
         # if the animation is complete, reset animation index
         if self.index >= len(self.images) - 1 and self.counter >= smoke_speed:
             self.kill()
@@ -50,6 +47,7 @@ class Smoke(pygame.sprite.Sprite):
             elif self.speed < 0:
                 image = pygame.transform.scale(image, (96, 96))
                 image = pygame.transform.flip(image, True, False)
+            image = pygame.transform.scale_by(image, 0.8)
             self.images.append(image)
             sprite_column += 1
             if sprite_column > 4:
