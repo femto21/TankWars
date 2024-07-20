@@ -81,7 +81,7 @@ class Tank(pygame.sprite.Sprite):
             if abs(self.speed) < self.max_speed:
                 self.speed += self.acceleration * dt
         if self.smoke_cooldown % 10 == 0:
-            smoke = Smoke(self.speed, self.tank.centerx, self.tank.centery)
+            smoke = Smoke(self.speed, self.tank.centerx, self.tank.centery + 4)
             self.smoke_group.add(smoke)
 
     # method to speed up the tank in the left direction
@@ -92,7 +92,7 @@ class Tank(pygame.sprite.Sprite):
             if abs(self.speed) < self.max_speed:
                 self.speed -= self.acceleration * dt
         if self.smoke_cooldown % 10 == 0:
-            smoke = Smoke(self.speed, self.tank.centerx, self.tank.centery)
+            smoke = Smoke(self.speed, self.tank.centerx, self.tank.centery + 4)
             self.smoke_group.add(smoke)
 
     # Method to draw the turret and the tank

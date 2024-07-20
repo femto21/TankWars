@@ -3,6 +3,7 @@ from math import radians, cos, sin
 import pygame
 from pygame import Vector2
 
+from cannonballflame import CannonballFlame
 from explosion import Explosion
 from scripts.config import reference_dict, SCREEN_WIDTH, SCREEN_HEIGHT
 
@@ -23,6 +24,7 @@ class Cannonball(pygame.sprite.Sprite):
         self.launch_speed = self.min_speed
         self.horizontal_speed = self.launch_speed * cos(radians(self.launch_angle))
         self.vertical_speed = self.launch_speed * sin(radians(self.launch_angle))
+        self.flame_effect = CannonballFlame(self.cannonball.center)
         self.explosion = Explosion(launch_point)
         self.launched = False
         self.explosion_started = False
@@ -48,6 +50,9 @@ class Cannonball(pygame.sprite.Sprite):
             self.cannonball.center = Vector2(current_x_position, current_y_position)
             # Implement gravity
             self.vertical_speed -= self.g
+            self.flame_effect.update(Vector2(self.cannonball.centerx, self.cannonball.centery),
+                                     Vector2(self.cannonball.centerx - 16, self.cannonball.centery - 12),
+                                     self.horizontal_speed, self.vertical_speed)
             self.explosion.update(self.cannonball.center)
 
     # Method to update the horizontal and vertical speed components of the turret while it is loaded in the turret
@@ -68,6 +73,7 @@ class Cannonball(pygame.sprite.Sprite):
             self.explosion.update_position(self.cannonball.center)
             self.launched = False
             self.launch_speed = self.min_speed
+            self.flame_effect.burn = False
 
     # Method to implement the explosion of the cannonball
     def handle_explosion(self):
@@ -79,5 +85,6 @@ class Cannonball(pygame.sprite.Sprite):
         pygame.draw.line(surface, 'green', (self.cannonball.centerx, 0), (self.cannonball.centerx, SCREEN_HEIGHT))
         pygame.draw.line(surface, 'green', (0, self.cannonball.centery), (SCREEN_WIDTH, self.cannonball.centery))
         if self.launched:
+            self.flame_effect.draw(surface)
             surface.blit(self.image, self.cannonball)
         self.explosion.draw(surface)

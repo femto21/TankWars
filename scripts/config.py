@@ -2,19 +2,22 @@
 import pygame
 from pygame import Vector2
 
-BLOCK_WIDTH = 48
-BLOCK_HEIGHT = 48
+TILE_WIDTH = 48
+TILE_HEIGHT = 48
 NUMBER_OF_COLUMNS = 24
 NUMBER_OF_ROWS = 14
-SCREEN_WIDTH = BLOCK_WIDTH * NUMBER_OF_COLUMNS
-SCREEN_HEIGHT = BLOCK_HEIGHT * NUMBER_OF_ROWS
+SCREEN_WIDTH = TILE_WIDTH * NUMBER_OF_COLUMNS
+SCREEN_HEIGHT = TILE_HEIGHT * NUMBER_OF_ROWS
 SCREEN_SIZE = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 reference_dict = {}
 
 
 # Method to load the required images into the reference dictionary
-def load_image(tank_type, image_name, scale, colorKey=None):
-    image = pygame.image.load(f'Images/{tank_type}/{image_name}.png')
+def load_image(image_name, scale, tank_type = None, colorKey = None):
+    if tank_type is None:
+        image = pygame.image.load(f'Images/{image_name}.png').convert_alpha()
+    else:
+        image = pygame.image.load(f'Images/{tank_type}/{image_name}.png').convert_alpha()
     width = image.get_width() * scale
     height = image.get_height() * scale
 

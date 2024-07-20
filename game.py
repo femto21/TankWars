@@ -1,7 +1,9 @@
 import pygame
 
+from background import Background
 from scripts.config import SCREEN_SIZE, load_image
 from tank import Tank
+from tiles import Tiles
 
 
 # Class that handles the game logic
@@ -24,15 +26,19 @@ class Game:
         self.charging_launch = False
 
         # Add the required images to the reference dictionary
-        load_image('LeftTank', 'LeftTankTurret', 1)
+        load_image('LeftTankTurret', 1, 'LeftTank')
         for i in range(3):
-            load_image('LeftTank', f'LeftTank{i}', 1)
-        load_image('LeftTank', 'Cannonball', 1)
+            load_image(f'LeftTank{i}', 1, 'LeftTank')
+        load_image('Cannonball', 0.6)
         for i in range(1, 9):
-            load_image('LeftTank', f'explosion{i}', 3)
+            load_image(f'explosion{i}', 3, 'LeftTank')
+        load_image('Background', 1)
+
+        self.bg = Background()
+        self.tiles = Tiles()
 
         # Create Tank object for the first player
-        self.first_tank = Tank('LeftTank', 500, 300)
+        self.first_tank = Tank('LeftTank', 500, 405)
 
     # Method to update the tank and its animation
     def update(self, dt):
@@ -43,6 +49,8 @@ class Game:
     # Method to draw the tank on the screen
     def draw(self, surface):
         surface.fill('black')
+        self.bg.draw_canvas(surface)
+        self.tiles.draw_tiles(surface)
         self.first_tank.draw(surface)
 
     # Method that handles the game loop. It is called 60 times each second

@@ -23,13 +23,16 @@ class Smoke(pygame.sprite.Sprite):
 
     # Method to change the current smoke image
     def update(self):
-        smoke_speed = 2
+        smoke_speed = 1
         # Update fire animation
         self.counter += 1
         if self.counter >= smoke_speed and self.index < len(self.images) - 1:
             self.counter = 0
             self.index += 1
             self.image = self.images[self.index]
+
+        if self.index > 10:
+            self.image = pygame.transform.box_blur(self.image, 5)
 
         # if the animation is complete, reset animation index
         if self.index >= len(self.images) - 1 and self.counter >= smoke_speed:
