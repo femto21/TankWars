@@ -9,16 +9,20 @@ from scripts.spritesheet import Spritesheet
 class Fire(pygame.sprite.Sprite):
     fire_distance = 90
 
-    def __init__(self, pivot, angle):
+    def __init__(self, tank_type, pivot, angle):
         pygame.sprite.Sprite.__init__(self)
         self.index = 0
         self.images = []
+        self.tank_type = tank_type
         self.upload_images()
         self.pivot = pivot
-        self.angle = angle - 10
         self.offset = Vector2()
         self.offset.from_polar((self.fire_distance, -angle))
-        self.position = self.pivot + self.offset
+        if tank_type == 'LeftTank':
+            self.angle = angle - 10
+        elif tank_type == 'RightTank':
+            self.angle = angle + 14
+        self.position = self.pivot - self.offset
         self.image = self.images[self.index]
         self.images_orig = self.images
         self.image_orig = self.images_orig[self.index]
@@ -29,14 +33,23 @@ class Fire(pygame.sprite.Sprite):
     # Method to move the fire animation's pivot point
     def move(self, pivot):
         self.pivot = Vector2(pivot)
-        self.position = self.pivot + self.offset
+        if self.tank_type == 'LeftTank':
+            self.position = self.pivot + self.offset
+        elif self.tank_type == 'RightTank':
+            self.position = self.pivot - self.offset
 
     # Method to have the image rotated and ready in place
     def rotate(self, angle):
-        self.angle = angle - 10
+        if self.tank_type == 'LeftTank':
+            self.angle = angle - 10
+        elif self.tank_type == 'RightTank':
+            self.angle = angle + 14
         self.image, self.rect = rotate_on_pivot(self.image_orig, self.angle,
                                                 self.pivot, self.position)
-        self.image = pygame.transform.rotate(self.image, -30)
+        if self.tank_type == 'LeftTank':
+            self.image = pygame.transform.rotate(self.image, -30)
+        elif self.tank_type == 'RightTank':
+            self.image = pygame.transform.rotate(self.image, 30)
         self.rect = self.image.get_frect(center = self.rect.center)
 
     # Method to initiate the animation when a shot is fired
@@ -52,7 +65,10 @@ class Fire(pygame.sprite.Sprite):
                 self.image_orig = self.images_orig[self.index]
                 self.image, self.rect = rotate_on_pivot(self.image_orig, self.angle,
                                                         self.pivot, self.position)
-                self.image = pygame.transform.rotate(self.image, -30)
+                if self.tank_type == 'LeftTank':
+                    self.image = pygame.transform.rotate(self.image, -30)
+                elif self.tank_type == 'RightTank':
+                    self.image = pygame.transform.rotate(self.image, 30)
                 self.rect = self.image.get_frect(center = self.rect.center)
 
             # if the animation is complete, reset animation index
@@ -72,6 +88,8 @@ class Fire(pygame.sprite.Sprite):
         sprite_column = 0
         for i in range(7):
             image = spritesheet.get_sprite(sprite_column * 96, sprite_row * 96, 96, 96, 'black')
+            if self.tank_type == 'RightTank':
+                image = pygame.transform.flip(image, False, True)
             self.images.append(image)
             sprite_column += 1
             if sprite_column > 2:

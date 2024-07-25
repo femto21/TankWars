@@ -18,16 +18,19 @@ class Tank(pygame.sprite.Sprite):
         self.animation_index = 0
         self.animation_update_time = pygame.time.get_ticks()
         self.speed = 0
-        self.acceleration_update_time = pygame.time.get_ticks()
         for i in range(3):
             image_name = f'{self.tank_type}{i}'
             image = reference_dict[image_name]
             self.animation_list.append(image)
         self.tank_image = self.animation_list[self.animation_index]
         self.tank = self.tank_image.get_frect(center = (x, y))
-        self.pivot_x = self.tank.center[0]
-        self.pivot_y = self.tank.center[1] - 10
-        self.turret = Turret(Vector2(self.pivot_x, self.pivot_y), starting_angle = 0)
+        if tank_type == 'LeftTank':
+            self.pivot_x = self.tank.centerx
+            self.pivot_y = self.tank.centery - 10
+        elif tank_type == 'RightTank':
+            self.pivot_x = self.tank.centerx - 10
+            self.pivot_y = self.tank.centery - 15
+        self.turret = Turret(Vector2(self.pivot_x, self.pivot_y), tank_type)
         self.smoke_group = pygame.sprite.Group()
         self.smoke_cooldown = 0
 
@@ -56,8 +59,12 @@ class Tank(pygame.sprite.Sprite):
         self.tank.x = self.tank.x + self.speed
 
         # update turret position
-        self.pivot_x = self.tank.centerx
-        self.pivot_y = self.tank.centery - 10
+        if self.tank_type == 'LeftTank':
+            self.pivot_x = self.tank.centerx
+            self.pivot_y = self.tank.centery - 10
+        elif self.tank_type == 'RightTank':
+            self.pivot_x = self.tank.centerx - 10
+            self.pivot_y = self.tank.centery - 15
         turret_pivot = Vector2(self.pivot_x, self.pivot_y)
 
         self.turret.update(turret_pivot, rotate_up, rotate_down, dt)

@@ -27,8 +27,10 @@ class Game:
 
         # Add the required images to the reference dictionary
         load_image('LeftTankTurret', 1, 'LeftTank')
+        load_image('RightTankTurret', 1, 'RightTank')
         for i in range(3):
             load_image(f'LeftTank{i}', 1, 'LeftTank')
+            load_image(f'RightTank{i}', 1, 'RightTank')
         load_image('Cannonball', 0.6)
         for i in range(1, 9):
             load_image(f'explosion{i}', 3, 'LeftTank')
@@ -40,11 +42,27 @@ class Game:
         # Create Tank object for the first player
         self.first_tank = Tank('LeftTank', 500, 405)
 
+        # Create Tank object for the second player
+        self.second_tank = Tank('RightTank', 800, 405)
+
+        self.player_turn = 1
+        self.timer = 0
+        self.timer_started = False
+
     # Method to update the tank and its animation
     def update(self, dt):
-        self.first_tank.update_animation()
-        self.first_tank.update(self.tank_moving_left, self.tank_moving_right,
-                               self.turret_rotating_up, self.turret_rotating_down, self.charging_launch, dt)
+        if self.player_turn == 1:
+            self.first_tank.update_animation()
+            self.first_tank.update(self.tank_moving_left, self.tank_moving_right,
+                                   self.turret_rotating_up, self.turret_rotating_down, self.charging_launch, dt)
+        else:
+            self.first_tank.smoke_group.update()
+        if self.player_turn == 2:
+            self.second_tank.update_animation()
+            self.second_tank.update(self.tank_moving_left, self.tank_moving_right,
+                                    self.turret_rotating_up, self.turret_rotating_down, self.charging_launch, dt)
+        else:
+            self.second_tank.smoke_group.update()
 
     # Method to draw the tank on the screen
     def draw(self, surface):
@@ -52,6 +70,7 @@ class Game:
         self.bg.draw_canvas(surface)
         self.tiles.draw_tiles(surface)
         self.first_tank.draw(surface)
+        self.second_tank.draw(surface)
 
     # Method that handles the game loop. It is called 60 times each second
     def run(self):
@@ -66,6 +85,25 @@ class Game:
             self.clock.tick(self.FPS)
             self.update(dt)
             self.draw(self.screen)
+
+            if self.player_turn == 1:
+                if self.first_tank.turret.cannonball.explosion.explosion_started:
+                    self.timer_started = True
+                if self.timer_started:
+                    self.timer += dt * self.FPS
+                    if self.timer >= 35:
+                        self.player_turn = 2
+                        self.timer = 0
+                        self.timer_started = False
+            elif self.player_turn == 2:
+                if self.second_tank.turret.cannonball.explosion.explosion_started:
+                    self.timer_started = True
+                if self.timer_started:
+                    self.timer += dt * self.FPS
+                    if self.timer >= 35:
+                        self.player_turn = 1
+                        self.timer = 0
+                        self.timer_started = False
 
             for event in pygame.event.get():
                 # quit game

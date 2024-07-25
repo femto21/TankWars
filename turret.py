@@ -13,14 +13,18 @@ class Turret(pygame.sprite.Sprite):
     # Distance between the turret and the point of pivot
     pivot_distance = 24
 
-    def __init__(self, pivot, starting_angle = 10):
+    def __init__(self, pivot, tank_type, starting_angle = 10):
         pygame.sprite.Sprite.__init__(self)
         self.pivot = pivot
-        self.angle = 10
+        self.tank_type = tank_type
+        if tank_type == 'LeftTank':
+            self.angle = starting_angle
+        elif tank_type == 'RightTank':
+            self.angle = starting_angle + 160
         self.offset = Vector2()
         self.offset.from_polar((self.pivot_distance, -starting_angle))
         self.pos = pivot + self.offset
-        self.image_orig = reference_dict['LeftTankTurret']
+        self.image_orig = reference_dict[f'{tank_type}Turret']
         self.image = self.image_orig
         self.turret = self.image.get_frect(center=self.pos)
         self.cannonball_offset = Vector2(20 * cos(radians(self.angle)), -20 * sin(radians(self.angle)))
@@ -28,7 +32,7 @@ class Turret(pygame.sprite.Sprite):
         self.cannonball = Cannonball(self.cannonball_origin, self.angle)
         self.launch_ready = True
         self.charged = False
-        self.fire_animation = Fire(self.pivot, self.angle)
+        self.fire_animation = Fire(tank_type, self.pivot, self.angle)
 
     # Method to handle other methods of the turret and the cannonballs
     def update(self, turret_pivot, rotate_up, rotate_down, dt):
@@ -43,11 +47,19 @@ class Turret(pygame.sprite.Sprite):
     # Method to handle the rotation of the turret
     def rotate(self, rotating_up, rotating_down, dt):
         if rotating_up:
-            if self.angle < 65:
-                self.angle += 30 * dt
+            if self.tank_type == 'LeftTank':
+                if self.angle < 65:
+                    self.angle += 30 * dt
+            elif self.tank_type == 'RightTank':
+                if self.angle > 115:
+                    self.angle -= 30 * dt
         if rotating_down:
-            if self.angle > 10:
-                self.angle -= 30 * dt
+            if self.tank_type == 'LeftTank':
+                if self.angle > 10:
+                    self.angle -= 30 * dt
+            elif self.tank_type == 'RightTank':
+                if self.angle < 170:
+                    self.angle += 30 * dt
 
         self.image, self.turret = rotate_on_pivot(self.image_orig, self.angle, self.pivot, self.pos)
         self.fire_animation.rotate(self.angle)

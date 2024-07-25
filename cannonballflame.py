@@ -7,10 +7,11 @@ from scripts.config import rotate_on_pivot
 
 # Class for the cannonball flame effect
 class CannonballFlame(pygame.sprite.Sprite):
-    def __init__(self, pivot):
+    def __init__(self, pivot, launch_angle):
         pygame.sprite.Sprite.__init__(self)
         self.images = []
         self.index = 0
+        self.angle = launch_angle
         self.upload_images()
         self.image = self.images[self.index]
         self.images_orig = self.images
@@ -28,14 +29,14 @@ class CannonballFlame(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center = position)
         angle = math.degrees(math.atan(vertical_speed / horizontal_speed))
         self.image, self.rect = rotate_on_pivot(self.image_orig, angle, pivot, position)
-        self.adjust_flame_angle()
-
-    def adjust_flame_angle(self):
-        pass
 
     def upload_images(self):
         for i in range(60):
-            image = pygame.image.load(f'Images/CannonballEffect2/1_{i}.png')
+            if abs(self.angle) < 90:
+                image = pygame.image.load(f'Images/CannonballEffect2/1_{i}.png')
+            else:
+                image = pygame.image.load(f'Images/CannonballEffect2/1_{i}.png')
+                image = pygame.transform.flip(image, True, False)
             image = pygame.transform.scale_by(image, 2)
             self.images.append(image)
 
